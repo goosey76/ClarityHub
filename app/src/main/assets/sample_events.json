@@ -1,0 +1,31 @@
+{
+  "events": [
+    {
+      "id": "1",
+      "title": "Vorlesung Mathematik",
+      "category": "Uni",
+      "beginDate": "2025-01-09T10:00:00",
+      "endDate": "2025-01-09T12:00:00",
+      "travelTime": 15,
+      "location": "Hörsaal A",
+      "description": "Lineare Algebra"
+    },
+    {
+      "id": "2",
+      "title": "Fußballtraining",
+      "category": "Sport",
+      "beginDate": "2025-01-09T18:00:00",
+      "endDate": "2025-01-09T19:30:00",
+      "travelTime": 20,
+      "location": "Sportplatz",
+      "description": "Teamtraining"
+    }
+  ],
+  "locations": [
+    "Hörsaal A",
+    "Hörsaal B",
+    "Bibliothek",
+    "Sportplatz",
+    "Mensa"
+  ]
+}

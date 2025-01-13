@@ -1,0 +1,11 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/sort_by_priority"
+        android:title="Nach Priorität" />
+    <item
+        android:id="@+id/sort_by_category"
+        android:title="Nach Kategorie" />
+    <item
+        android:id="@+id/sort_by_name"
+        android:title="Nach Name" />
+</menu>
