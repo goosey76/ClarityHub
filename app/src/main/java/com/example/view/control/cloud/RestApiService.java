@@ -579,6 +579,7 @@ public class RestApiService {
      * @return Ein LiveData welches die Rückgabe der Cloud zurück gibt
      */
     public static LiveData<Event> getSharedEvent(String idOfSharedEvent) {
+        Log.d ("CloudService", "ID of Shared Event: " + idOfSharedEvent);
         //Hilfsklasse zum aynchronen Zurückgeben von CloudRückmeldungen
         MutableLiveData<Event> eventLiveData = new MutableLiveData<>();
         ApiService apiService = retrofitInstance.create(ApiService.class);

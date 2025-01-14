@@ -128,6 +128,7 @@ public class EventDialogHelper {
                 {
                     Event newEvent = createEvent();
                     RestApiService.sendEventToShare(newEvent);
+                    Log.d("Cloud", "Event shared: " + newEvent.getTitle());
                     showPairedDevices(newEvent.getId());
                 }
         );

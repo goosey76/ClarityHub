@@ -39,7 +39,7 @@ public class EventDatabaseHelper extends SQLiteOpenHelper {
     private Context context;
     public EventDatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
-        context = context;
+        this.context = context;
     }
 
     @Override
@@ -70,13 +70,12 @@ public class EventDatabaseHelper extends SQLiteOpenHelper {
             ContentValues values = getContentValuesFromEvent(event);
 
             long result = db.insert(TABLE_EVENTS, null, values);
+            //Speichert in Cloud ab
+            RestApiService.sendNewEvent(context, event);
             if (result == -1) {
                 Log.e("EventDatabaseHelper", "Failed to insert event: " + event.getId());
             } else {
                 Log.d("EventDatabaseHelper", "Event inserted successfully: " + event.getId());
-
-                //Speichert in Cloud ab
-                RestApiService.sendNewEvent(context, event);
             }
         } catch (Exception e) {
             Log.e("EventDatabaseHelper", "Error inserting event: " + event.getId(), e);
@@ -105,7 +104,6 @@ public class EventDatabaseHelper extends SQLiteOpenHelper {
 
             if (rowsAffected > 0) {
                 Log.d("EventDatabaseHelper", "Event updated successfully: " + event.getTitle());
-                RestApiService.updateEventInCloud(context, event);
             } else {
                 Log.w("EventDatabaseHelper", "No event found with ID: " + event.getId() + ". Update failed.");
             }
@@ -145,7 +143,6 @@ public class EventDatabaseHelper extends SQLiteOpenHelper {
             int rowsDeleted = db.delete(TABLE_EVENTS, COLUMN_ID + " = ?", new String[]{eventId});
             if (rowsDeleted > 0) {
                 Log.d("EventDatabaseHelper", "Event deleted successfully with ID: " + eventId);
-                RestApiService.deleteEventInCloud(context, eventId);
             } else {
                 Log.w("EventDatabaseHelper", "No event found with ID: " + eventId);
             }

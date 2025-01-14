@@ -18,6 +18,7 @@ import androidx.lifecycle.LiveData;
 import com.example.view.R;
 import com.example.view.control.cloud.RestApiService;
 import com.example.view.model.calendar.Event;
+import com.example.view.model.repository.EventRepository;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -52,28 +53,61 @@ public class ReceiveModeActivity extends AppCompatActivity {
     }
 
     private void returnToHostActivity(String receivedMessage) {
-        LiveData<Event> receivedEvent = RestApiService.getSharedEvent(receivedMessage);
-
-        // Beobachte das LiveData-Objekt
-        receivedEvent.observe(this, event -> {
-                    // Verwalte die Antwort, sobald sie verfügbar ist
-                    if (event != null) {
-                        Toast.makeText(this, "API Response received: " + event.toString(), Toast.LENGTH_LONG).show();
-                    } else {
-                        Toast.makeText(this, "Failed to get response from API.", Toast.LENGTH_LONG).show();
-                    }
-                }
-        );
+        // Since this is called from AcceptThread (background thread),
+        // we need to switch to the main thread to observe LiveData
         new Handler(Looper.getMainLooper()).post(() -> {
-            Toast.makeText(this, "Message received: " + receivedMessage, Toast.LENGTH_LONG).show();
+            // Show loading state
+            updateStatus("Processing received data...");
 
-            // Zurück zur Host-Activity und Nachricht als Extra übergeben
-            Intent intent = new Intent();
-            intent.putExtra("received_message", receivedMessage);
-            setResult(RESULT_OK, intent); // Setzt das Ergebnis für die aufrufende Activity
-            finish(); // Schließt die ReceiveModeActivity
+            // Get LiveData from API
+            LiveData<Event> receivedEventLiveData = RestApiService.getSharedEvent(receivedMessage);
+
+            // Now we're on the main thread, we can safely observe LiveData
+            receivedEventLiveData.observe(this, event -> {
+                // Remove the observer after first result
+                receivedEventLiveData.removeObservers(this);
+
+                if (event != null) {
+                    // Move database operation to background thread
+                    new Thread(() -> {
+                        try {
+                            EventRepository repository = new EventRepository(this);
+                            repository.insertEvent(event);
+
+                            // Switch back to main thread for UI updates
+                            new Handler(Looper.getMainLooper()).post(() -> {
+                                Toast.makeText(this,
+                                        "Event saved: " + event.getTitle(),
+                                        Toast.LENGTH_LONG).show();
+
+                                Intent resultIntent = new Intent();
+                                resultIntent.putExtra("received_message", receivedMessage);
+                                resultIntent.putExtra("event_id", event.getId());
+                                setResult(RESULT_OK, resultIntent);
+                                finish();
+                            });
+                        } catch (Exception e) {
+                            Log.e(TAG, "Error saving event", e);
+                            new Handler(Looper.getMainLooper()).post(() -> {
+                                Toast.makeText(this,
+                                        "Error saving event: " + e.getMessage(),
+                                        Toast.LENGTH_LONG).show();
+                                setResult(RESULT_CANCELED);
+                                finish();
+                            });
+                        }
+                    }).start();
+                } else {
+                    Toast.makeText(this,
+                            "Error retrieving event data",
+                            Toast.LENGTH_LONG).show();
+                    setResult(RESULT_CANCELED);
+                    finish();
+                }
+            });
         });
     }
+
 
     private class AcceptThread extends Thread {
         private final BluetoothServerSocket serverSocket;
