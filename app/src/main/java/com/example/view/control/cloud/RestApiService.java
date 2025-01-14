@@ -47,7 +47,7 @@ public class RestApiService {
      * Basis-URL der API. Diese URL dient als Einstiegspunkt für alle Endpunkte.
      */
     //private static final String BASE_URL = "https://141.144.243.26:25565/api/";
-    private static final String BASE_URL = "http://192.168.178.26:8080/api/";
+    private static final String BASE_URL = "http://10.0.2.2:8080/api/";
 
     /**
      * Name der SharedPreferences, in denen die UUID gespeichert wird.

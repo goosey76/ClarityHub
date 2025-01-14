@@ -37,7 +37,7 @@ public class MainActivity extends AppCompatActivity {
                 if (allGranted) {
                     initializeBluetooth();
                 } else {
-                    Toast.makeText(this, "Bluetooth permissions are required", Toast.LENGTH_LONG).show();
+                   // Toast.makeText(this, "Bluetooth permissions are required", Toast.LENGTH_LONG).show();
                 }
             });
 

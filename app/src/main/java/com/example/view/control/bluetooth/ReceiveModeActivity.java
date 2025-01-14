@@ -53,9 +53,12 @@ public class ReceiveModeActivity extends AppCompatActivity {
     }
 
     private void returnToHostActivity(String receivedMessage) {
+
+
         // Since this is called from AcceptThread (background thread),
         // we need to switch to the main thread to observe LiveData
         new Handler(Looper.getMainLooper()).post(() -> {
+
             // Show loading state
             updateStatus("Processing received data...");
 
@@ -80,6 +83,7 @@ public class ReceiveModeActivity extends AppCompatActivity {
                                         "Event saved: " + event.getTitle(),
                                         Toast.LENGTH_LONG).show();
 
+                                Toast.makeText(this, receivedMessage, Toast.LENGTH_LONG).show();
                                 Intent resultIntent = new Intent();
                                 resultIntent.putExtra("received_message", receivedMessage);
                                 resultIntent.putExtra("event_id", event.getId());

@@ -86,7 +86,7 @@ public class RestApiServiceIntegrationTest {
         context = ApplicationProvider.getApplicationContext();
 
         // UUID generieren und direkt speichern
-       generateAndSetUuid();
+       //generateAndSetUuid();
        //useSameUUid("3d652250-7db0-411a-a8bb-1ce9904c5ef9");
     }
 
@@ -356,7 +356,7 @@ public class RestApiServiceIntegrationTest {
         final CountDownLatch latch = new CountDownLatch(1);
 
         // Führe den API-Aufruf aus
-        LiveData<Event> eventLiveData = RestApiService.getSharedEvent("12345678");
+        LiveData<Event> eventLiveData = RestApiService.getSharedEvent("00000101");
 
         // Beobachte die LiveData und blockiere den Test, bis die Daten abgerufen wurden
         eventLiveData.observeForever(new Observer<Event>() {
