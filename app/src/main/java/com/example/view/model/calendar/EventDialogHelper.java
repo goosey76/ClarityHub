@@ -1,7 +1,9 @@
 package com.example.view.model.calendar;
 
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,7 +15,9 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.FragmentActivity;
 
 import com.example.view.R;
+import com.example.view.control.bluetooth.DeviceListActivity;
 import com.example.view.control.calendar.CalendarViewModel;
+import com.example.view.control.cloud.RestApiService;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.datepicker.MaterialDatePicker;
 import com.google.android.material.slider.Slider;
@@ -40,7 +44,7 @@ public class EventDialogHelper {
     // UI Components
     private TextInputEditText titleInput, notesInput, participantsInput;
     private AutoCompleteTextView categoryDropdown, locationInput, repetitionDropdown;
-    private MaterialButton startDateTimeButton, endDateTimeButton, saveButton, cancelButton, deleteButton;
+    private MaterialButton startDateTimeButton, endDateTimeButton, saveButton, cancelButton, deleteButton, sendenButton;
     private Slider travelTimeSlider;
 
     private LocalDateTime selectedStartDateTime;
@@ -100,6 +104,7 @@ public class EventDialogHelper {
         cancelButton = dialogView.findViewById(R.id.cancelButton);
         deleteButton = dialogView.findViewById(R.id.deleteButton);
         travelTimeSlider = dialogView.findViewById(R.id.travelTimeSlider);
+        sendenButton = dialogView.findViewById(R.id.sendButton);
     }
 
     private void prefillEventData(Event event) {
@@ -119,6 +124,14 @@ public class EventDialogHelper {
         startDateTimeButton.setOnClickListener(v -> showDateTimePicker(true));
         endDateTimeButton.setOnClickListener(v -> showDateTimePicker(false));
 
+        sendenButton.setOnClickListener(v ->
+                {
+                    Event newEvent = createEvent();
+                    RestApiService.sendEventToShare(newEvent);
+                    showPairedDevices(newEvent.getId());
+                }
+        );
+
         saveButton.setOnClickListener(v -> {
             if (eventToEdit == null) saveEvent();
             else updateEvent(eventToEdit);
@@ -134,6 +147,17 @@ public class EventDialogHelper {
             });
         } else {
             deleteButton.setVisibility(View.GONE);
+        }
+    }
+
+    private void showPairedDevices(String idOfEventToShare) {
+        Intent intent1 = new Intent(context, DeviceListActivity.class);
+        intent1.putExtra("idOfEventToShare", idOfEventToShare);
+        if (context instanceof Activity) {
+            context.startActivity(intent1);
+        } else {
+            intent1.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            context.startActivity(intent1);
         }
     }
 
@@ -164,33 +188,26 @@ public class EventDialogHelper {
             return;
         }
 
-        Event newEvent = createEvent(
-                titleInput.getText().toString(),
-                categoryDropdown.getText().toString(),
-                selectedStartDateTime,
-                selectedEndDateTime,
-                notesInput.getText().toString()
-        );
-        newEvent.setParticipants(Arrays.asList(participantsInput.getText().toString().split(",")));
+        Event newEvent = createEvent();
 
         viewModel.addEvent(newEvent);
         Log.d("EventDialogHelper", "New event created: " + newEvent.getTitle());
         dialog.dismiss();
     }
 
-    private Event createEvent(String title, String category, LocalDateTime startDateTime, LocalDateTime endDateTime, String description) {
-        return new Event(
+    private Event createEvent () {
+        Event newEvent = new Event(
                 UUID.randomUUID().toString(),
-                title,
-                category,
-                startDateTime,
-                endDateTime,
-                0,
-                null,
-                null,
-                description,
-                new ArrayList<>()
-        );
+                titleInput.getText().toString(),
+                categoryDropdown.getText().toString(),
+                selectedStartDateTime,
+                selectedEndDateTime,
+                (int) travelTimeSlider.getValue(),
+                locationInput.getText().toString(),
+                repetitionDropdown.getText().toString(),
+                notesInput.getText().toString(),
+                Arrays.asList(participantsInput.getText().toString().split(",")));
+        return newEvent;
     }
 
     private void showDateTimePicker(boolean isStart) {

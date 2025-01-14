@@ -7,6 +7,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
+import com.example.view.control.cloud.MissingUUIDException;
+import com.example.view.control.cloud.RestApiService;
 import com.example.view.model.calendar.Event;
 
 import org.json.JSONArray;
@@ -34,9 +36,10 @@ public class EventDatabaseHelper extends SQLiteOpenHelper {
     private static final String COLUMN_DESCRIPTION = "description";
     private static final String COLUMN_CATEGORY = "category";
     private static final String COLUMN_PARTICIPANTS = "participants";
-
+    private Context context;
     public EventDatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        context = context;
     }
 
     @Override
@@ -71,6 +74,9 @@ public class EventDatabaseHelper extends SQLiteOpenHelper {
                 Log.e("EventDatabaseHelper", "Failed to insert event: " + event.getId());
             } else {
                 Log.d("EventDatabaseHelper", "Event inserted successfully: " + event.getId());
+
+                //Speichert in Cloud ab
+                RestApiService.sendNewEvent(context, event);
             }
         } catch (Exception e) {
             Log.e("EventDatabaseHelper", "Error inserting event: " + event.getId(), e);
@@ -99,6 +105,7 @@ public class EventDatabaseHelper extends SQLiteOpenHelper {
 
             if (rowsAffected > 0) {
                 Log.d("EventDatabaseHelper", "Event updated successfully: " + event.getTitle());
+                RestApiService.updateEventInCloud(context, event);
             } else {
                 Log.w("EventDatabaseHelper", "No event found with ID: " + event.getId() + ". Update failed.");
             }
@@ -138,6 +145,7 @@ public class EventDatabaseHelper extends SQLiteOpenHelper {
             int rowsDeleted = db.delete(TABLE_EVENTS, COLUMN_ID + " = ?", new String[]{eventId});
             if (rowsDeleted > 0) {
                 Log.d("EventDatabaseHelper", "Event deleted successfully with ID: " + eventId);
+                RestApiService.deleteEventInCloud(context, eventId);
             } else {
                 Log.w("EventDatabaseHelper", "No event found with ID: " + eventId);
             }

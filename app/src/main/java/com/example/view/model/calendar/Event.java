@@ -1,11 +1,12 @@
 package com.example.view.model.calendar;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 
-public class Event {
-    private String eventId;
+public class Event implements Serializable {
+    private String event_id;
     private String title;
     private String category;
     private LocalDateTime startDateTime;
@@ -17,10 +18,10 @@ public class Event {
     private List<String> participants;
 
     // Constructor
-    public Event(String eventId, String title, String category, LocalDateTime startDateTime,
+    public Event(String event_id, String title, String category, LocalDateTime startDateTime,
                  LocalDateTime endDateTime, int travelTime, String location, String repetition,
                  String notes, List<String> participants) {
-        this.eventId = eventId;
+        this.event_id = event_id;
         this.title = title;
         this.category = category;
         this.startDateTime = startDateTime;
@@ -34,11 +35,11 @@ public class Event {
 
     // Getters and Setters
     public String getId() {
-        return eventId;
+        return event_id;
     }
 
-    public void setId(String eventId) {
-        this.eventId = eventId;
+    public void setId(String event_id) {
+        this.event_id = event_id;
     }
 
     public String getTitle() {
@@ -125,7 +126,7 @@ public class Event {
     @Override
     public String toString() {
         return "Event{" +
-                "eventId='" + eventId + '\'' +
+                "eventId='" + event_id + '\'' +
                 ", title='" + title + '\'' +
                 ", category='" + category + '\'' +
                 ", startDateTime=" + startDateTime +

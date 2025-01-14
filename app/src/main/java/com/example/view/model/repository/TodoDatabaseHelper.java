@@ -5,8 +5,13 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
+import android.os.Build;
 import android.util.Log;
 
+import androidx.annotation.RequiresApi;
+
+import com.example.view.control.cloud.MissingUUIDException;
+import com.example.view.control.cloud.RestApiService;
 import com.example.view.model.todo.Task;
 import com.example.view.model.todo.Category;
 import com.example.view.model.todo.Priority;
@@ -29,8 +34,11 @@ public class TodoDatabaseHelper extends SQLiteOpenHelper {
     private static final String COLUMN_DESCRIPTION = "description";
     private static final String COLUMN_PRIORITY = "priority";
 
+    private Context context;
+
     public TodoDatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
+        this.context = context;
     }
 
     @Override
@@ -60,6 +68,12 @@ public class TodoDatabaseHelper extends SQLiteOpenHelper {
                 Log.e("TodoDatabaseHelper", "Failed to insert task.");
             } else {
                 Log.d("TodoDatabaseHelper", "Task inserted successfully: " + task.getTask());
+                try {
+                    //Speichert in Cloud ab
+                    RestApiService.sendNewToDo(context, task);
+                } catch (MissingUUIDException e) {
+                    Log.e("DatabaseHelper", "Error saving task in cloud", e);
+                }
             }
         } catch (Exception e) {
             Log.e("TodoDatabaseHelper", "Error inserting task.", e);
@@ -100,15 +114,56 @@ public class TodoDatabaseHelper extends SQLiteOpenHelper {
         return taskList;
     }
 
+    /**
+     * Löscht alle Aufgaben aus der Datenbank und entfernt sie auch aus der Cloud.
+     */
+    @RequiresApi(api = Build.VERSION_CODES.O)
     public void deleteAllTasks() {
         SQLiteDatabase db = this.getWritableDatabase();
+        List<String> columnIds = new ArrayList<>();
+
         try {
+            // Abfrage, um alle COLUMN_IDs zu erhalten
+            Cursor cursor = db.query(TABLE_TODOS, new String[]{COLUMN_ID}, null, null, null, null, null);
+            if (cursor != null) {
+                while (cursor.moveToNext()) {
+                    columnIds.add(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_ID)));
+                }
+                cursor.close();
+            }
+
+            // Logge die COLUMN_IDs (optional, zu Debug-Zwecken)
+            Log.d("DatabaseHelper", "Saved COLUMN_IDs: " + columnIds);
+
+            // Lösche alle Einträge in der Tabelle
             db.delete(TABLE_TODOS, null, null);
-            Log.d("TodoDatabaseHelper", "All tasks deleted successfully.");
+            Log.d("DatabaseHelper", "All tasks deleted");
+
+            new Thread(() -> {
+                for (int a = 0; a < columnIds.size(); a++) {
+                    // Lösche alle Einträge in der Cloud
+                    try {
+                        RestApiService.deleteToDoInCloud(context, columnIds.get(a));
+                    } catch (MissingUUIDException e) {
+                        Log.e("DatabaseHelper", "Error deleting task in cloud", e);
+                    }
+
+                    // Timeout von 1 Sekunde
+                    try {
+                        Thread.sleep(3000); // 1000 Millisekunden = 1 Sekunde
+                    } catch (InterruptedException e) {
+                        Log.e("Timeout", "Thread wurde unterbrochen", e);
+                    }
+                }
+            }).start();
+
+        } catch (Exception e) {
+            Log.e("DatabaseHelper", "Error deleting tasks", e);
         } finally {
             db.close();
         }
     }
+
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
